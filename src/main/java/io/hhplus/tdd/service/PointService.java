@@ -85,6 +85,6 @@ public class PointService {
     }
 
     public List<PointHistory> getPointHistories(long id) throws Exception {
-        return List.of();
+        return pointHistoryRepository.selectAllByUserId(id);
     }
 }
