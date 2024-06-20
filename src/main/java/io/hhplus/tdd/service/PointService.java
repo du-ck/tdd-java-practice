@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.StampedLock;
 
 @Service
 @RequiredArgsConstructor
@@ -20,26 +21,34 @@ public class PointService {
     private final UserPointRepository userPointRepository;
     private final PointHistoryRepository pointHistoryRepository;
 
+    private final StampedLock stampedLock = new StampedLock();
+
     public UserPointDTO chargePoint(long id, long amount) throws Exception {
         if (amount < 0) {
             throw new ChargeException("Amount must be positive");
         }
 
-        //기존 포인트를 가져온다.
-        Optional<UserPoint> existUser = Optional.ofNullable(userPointRepository.selectById(id));
-        if (existUser.isPresent()) {
-            //update 시킬 point
-            Long updatePoint = existUser.get().point() + amount;
+        long stamp = stampedLock.writeLock(); // 쓰기 잠금 획득
 
-            Optional<UserPoint> getPoint = Optional.ofNullable(userPointRepository.insertOrUpdate(id, updatePoint));
-            if (getPoint.isPresent()) {
-                pointHistoryRepository.insert(id, amount, TransactionType.CHARGE, System.currentTimeMillis());
+        try {
+            //기존 포인트를 가져온다.
+            Optional<UserPoint> existUser = Optional.ofNullable(userPointRepository.selectById(id));
+            if (existUser.isPresent()) {
+                //update 시킬 point
+                Long updatePoint = existUser.get().point() + amount;
 
-                return UserPointDTO.builder()
-                        .user_id(getPoint.get().id())
-                        .user_point(getPoint.get().point())
-                        .build();
+                Optional<UserPoint> getPoint = Optional.ofNullable(userPointRepository.insertOrUpdate(id, updatePoint));
+                if (getPoint.isPresent()) {
+                    pointHistoryRepository.insert(id, amount, TransactionType.CHARGE, System.currentTimeMillis());
+
+                    return UserPointDTO.builder()
+                            .user_id(getPoint.get().id())
+                            .user_point(getPoint.get().point())
+                            .build();
+                }
             }
+        } finally {
+            stampedLock.unlockWrite(stamp);
         }
         return null;
     }
@@ -62,25 +71,31 @@ public class PointService {
             throw new UsePointException("Amount must be positive");
         }
 
-        //기존 포인트를 가져온다.
-        Optional<UserPoint> existUser = Optional.ofNullable(userPointRepository.selectById(id));
-        if (existUser.isPresent()) {
-            if (existUser.get().point() < amount) {
-                throw new UsePointException("Insufficient Point");
-            }
-            //update 시킬 point
-            Long updatePoint = existUser.get().point() - amount;
-            Optional<UserPoint> getPoint = Optional.ofNullable(userPointRepository.insertOrUpdate(id, updatePoint));
+        long stamp = stampedLock.writeLock(); // 쓰기 잠금 획득
+        try {
+            //기존 포인트를 가져온다.
+            Optional<UserPoint> existUser = Optional.ofNullable(userPointRepository.selectById(id));
+            if (existUser.isPresent()) {
+                if (existUser.get().point() < amount) {
+                    throw new UsePointException("Insufficient Point");
+                }
+                //update 시킬 point
+                Long updatePoint = existUser.get().point() - amount;
+                Optional<UserPoint> getPoint = Optional.ofNullable(userPointRepository.insertOrUpdate(id, updatePoint));
 
-            if (getPoint.isPresent()) {
-                pointHistoryRepository.insert(id, amount, TransactionType.USE, System.currentTimeMillis());
+                if (getPoint.isPresent()) {
+                    pointHistoryRepository.insert(id, amount, TransactionType.USE, System.currentTimeMillis());
 
-                return UserPointDTO.builder()
-                        .user_id(getPoint.get().id())
-                        .user_point(getPoint.get().point())
-                        .build();
+                    return UserPointDTO.builder()
+                            .user_id(getPoint.get().id())
+                            .user_point(getPoint.get().point())
+                            .build();
+                }
             }
+        } finally {
+            stampedLock.unlockWrite(stamp);
         }
+
         return null;
     }
 
