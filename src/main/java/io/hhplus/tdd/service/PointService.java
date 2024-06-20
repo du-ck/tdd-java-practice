@@ -42,6 +42,15 @@ public class PointService {
     }
 
     public UserPointDTO getUserPointInfo(long id) {
+        //기존 포인트를 가져온다.
+        Optional<UserPoint> existUser = Optional.ofNullable(userPointRepository.selectById(id));
+
+        if (existUser.isPresent()) {
+            return UserPointDTO.builder()
+                    .user_id(existUser.get().id())
+                    .user_point(existUser.get().point())
+                    .build();
+        }
         return null;
     }
 }
