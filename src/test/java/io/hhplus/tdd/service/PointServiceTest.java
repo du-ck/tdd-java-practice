@@ -67,8 +67,7 @@ class PointServiceTest {
      * @throws Exception
      */
     @Test
-    @DisplayName("0이하의 포인트 충전 테스트")
-    void chargeNegativePoint() {
+    void 음수나_0_포인트_충전_테스트() {
         Exception exception = Assertions.assertThrows(ChargeException.class,
                 () -> pointService.chargePoint(userId, -10L));
 
@@ -82,4 +81,24 @@ class PointServiceTest {
      * ex) selectById -> table.getOrDefault()
      *     insertOrUpdate -> table.put()
      */
+
+    /**
+     * 포인트 조회의 기본적인 기능 성공 여부를 판단하기 위한 테스트
+     */
+    @Test
+    @DisplayName("유저의 포인트를 조회하는 기능 테스트")
+    void getPointInfo() {
+
+        UserPoint user = new UserPoint(userId, existUserPoint, 0);
+
+        given(userPointRepository.selectById(anyLong()))
+                .willReturn(user);
+
+
+        UserPointDTO userPoint = pointService.getUserPointInfo(userId);
+
+        Assertions.assertNotNull(userPoint);
+        Assertions.assertEquals(userId, userPoint.getUser_id());
+        Assertions.assertEquals(userPoint.getUser_point(), existUserPoint);
+    }
 }

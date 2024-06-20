@@ -40,4 +40,8 @@ public class PointService {
         }
         return null;
     }
+
+    public UserPointDTO getUserPointInfo(long id) {
+        return null;
+    }
 }
