@@ -1,6 +1,7 @@
 package io.hhplus.tdd.service;
 
 import io.hhplus.tdd.dto.UserPointDTO;
+import io.hhplus.tdd.entity.PointHistory;
 import io.hhplus.tdd.entity.UserPoint;
 import io.hhplus.tdd.entity.types.TransactionType;
 import io.hhplus.tdd.exception.ChargeException;
@@ -10,6 +11,7 @@ import io.hhplus.tdd.repository.UserPointRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -80,5 +82,9 @@ public class PointService {
             }
         }
         return null;
+    }
+
+    public List<PointHistory> getPointHistories(long id) throws Exception {
+        return List.of();
     }
 }

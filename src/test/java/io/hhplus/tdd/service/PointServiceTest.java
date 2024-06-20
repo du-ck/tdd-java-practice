@@ -1,7 +1,9 @@
 package io.hhplus.tdd.service;
 
 import io.hhplus.tdd.dto.UserPointDTO;
+import io.hhplus.tdd.entity.PointHistory;
 import io.hhplus.tdd.entity.UserPoint;
+import io.hhplus.tdd.entity.types.TransactionType;
 import io.hhplus.tdd.exception.ChargeException;
 import io.hhplus.tdd.exception.UsePointException;
 import io.hhplus.tdd.repository.PointHistoryRepository;
@@ -14,6 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -153,5 +158,27 @@ class PointServiceTest {
 
         //예외 메세지 검증
         Assertions.assertEquals("Insufficient Point", exception.getMessage());
+    }
+
+    /**
+     * 포인트 내역조회의 기능 성공 여부를 판단하기 위해 작성
+     */
+    @Test
+    void 포인트_사용내역_조회() throws Exception {
+        List<PointHistory> histories = new ArrayList<>(){
+            {
+                add(new PointHistory(1L, userId, 300, TransactionType.CHARGE, System.currentTimeMillis()));
+                add(new PointHistory(2L, userId, -100, TransactionType.USE, System.currentTimeMillis()));
+                add(new PointHistory(3L, userId, 200, TransactionType.CHARGE, System.currentTimeMillis()));
+                add(new PointHistory(4L, userId, -50, TransactionType.USE, System.currentTimeMillis()));
+            }
+        };
+
+        given(pointHistoryRepository.selectAllByUserId(anyLong()))
+                .willReturn(histories);
+
+        List<PointHistory> resultList = pointService.getPointHistories(userId);
+
+        Assertions.assertEquals(histories, resultList);
     }
 }

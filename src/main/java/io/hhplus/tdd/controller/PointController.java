@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,10 +41,14 @@ public class PointController {
      * TODO - 특정 유저의 포인트 충전/이용 내역을 조회하는 기능을 작성해주세요.
      */
     @GetMapping("{id}/histories")
-    public List<PointHistory> history(
-            @PathVariable long id
-    ) {
-        return List.of();
+    public ResponseEntity<ResponseData> history(
+            @PathVariable(name = "id") long id
+    ) throws Exception {
+        List<PointHistory> resultList = pointService.getPointHistories(id);
+        ResponseData responseData = ResponseData.builder()
+                .data(CollectionUtils.isEmpty(resultList) ? "No Data" : resultList)
+                .build();
+        return new ResponseEntity<>(responseData, HttpStatus.OK);
     }
 
     /**
@@ -65,10 +70,14 @@ public class PointController {
      * TODO - 특정 유저의 포인트를 사용하는 기능을 작성해주세요.
      */
     @PatchMapping("{id}/use")
-    public UserPoint use(
-            @PathVariable long id,
+    public ResponseEntity<ResponseData> use(
+            @PathVariable(name = "id") long id,
             @RequestBody long amount
-    ) {
-        return new UserPoint(0, 0, 0);
+    ) throws Exception {
+        UserPointDTO user = pointService.usePoint(id, amount);
+        ResponseData responseData = ResponseData.builder()
+                .data(user)
+                .build();
+        return new ResponseEntity<>(responseData, HttpStatus.OK);
     }
 }

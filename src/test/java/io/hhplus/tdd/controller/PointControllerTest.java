@@ -1,6 +1,8 @@
 package io.hhplus.tdd.controller;
 
 import io.hhplus.tdd.dto.UserPointDTO;
+import io.hhplus.tdd.entity.PointHistory;
+import io.hhplus.tdd.entity.types.TransactionType;
 import io.hhplus.tdd.service.PointService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
@@ -102,5 +107,32 @@ class PointControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.user_id").exists())
                 .andExpect(jsonPath("$.data.user_point").exists());
+    }
+
+    /**
+     * get 요청을 통해 사용자 포인트 내역기능의 정상여부 판단을 위해 작성
+     * @throws Exception
+     */
+    @Test
+    void getHistories() throws Exception {
+        List<PointHistory> histories = new ArrayList<>(){
+            {
+                add(new PointHistory(1L, userId, 300, TransactionType.CHARGE, System.currentTimeMillis()));
+                add(new PointHistory(2L, userId, -100, TransactionType.USE, System.currentTimeMillis()));
+                add(new PointHistory(3L, userId, 200, TransactionType.CHARGE, System.currentTimeMillis()));
+                add(new PointHistory(4L, userId, -50, TransactionType.USE, System.currentTimeMillis()));
+            }
+        };
+        given(pointService.getPointHistories(userId))
+                .willReturn(histories);
+
+        mockMvc.perform(get("/point/{id}/histories", userId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[*].id").exists())
+                .andExpect(jsonPath("$.data[*].userId").exists())
+                .andExpect(jsonPath("$.data[*].amount").exists())
+                .andExpect(jsonPath("$.data[*].type").exists())
+                .andExpect(jsonPath("$.data[*].updateMillis").exists());
     }
 }
