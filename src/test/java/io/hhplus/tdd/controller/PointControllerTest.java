@@ -81,4 +81,26 @@ class PointControllerTest {
                 .andExpect(jsonPath("$.data.user_id").exists())
                 .andExpect(jsonPath("$.data.user_point").exists());
     }
+
+    /**
+     * patch 요청을 통해 사용자의 포인트 사용 기능의 정상여부 판단을 위해 작성
+     * @throws Exception
+     */
+    @Test
+    void usePoint() throws Exception {
+        //@PatchMapping("{id}/use")
+        Long usePoint = 100L;
+        given(pointService.usePoint(userId, usePoint))
+                .willReturn(UserPointDTO.builder()
+                        .user_id(userId)
+                        .user_point(existPoint)
+                        .build());
+
+        mockMvc.perform(patch("/point/{id}/use", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.valueOf(usePoint)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.user_id").exists())
+                .andExpect(jsonPath("$.data.user_point").exists());
+    }
 }

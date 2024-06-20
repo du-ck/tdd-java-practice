@@ -3,6 +3,7 @@ package io.hhplus.tdd.service;
 import io.hhplus.tdd.dto.UserPointDTO;
 import io.hhplus.tdd.entity.UserPoint;
 import io.hhplus.tdd.exception.ChargeException;
+import io.hhplus.tdd.exception.UsePointException;
 import io.hhplus.tdd.repository.PointHistoryRepository;
 import io.hhplus.tdd.repository.UserPointRepository;
 import org.junit.jupiter.api.Assertions;
@@ -86,8 +87,7 @@ class PointServiceTest {
      * 포인트 조회의 기본적인 기능 성공 여부를 판단하기 위한 테스트
      */
     @Test
-    @DisplayName("유저의 포인트를 조회하는 기능 테스트")
-    void getPointInfo() {
+    void 유저의_포인트를_조회하는_기능_테스트() {
 
         UserPoint user = new UserPoint(userId, existUserPoint, 0);
 
@@ -100,5 +100,58 @@ class PointServiceTest {
         Assertions.assertNotNull(userPoint);
         Assertions.assertEquals(userId, userPoint.getUser_id());
         Assertions.assertEquals(userPoint.getUser_point(), existUserPoint);
+    }
+
+    /**
+     * 포인트 사용의 기본적인 기능 성공 여부를 판단하기 위한 테스트
+     * @throws Exception
+     */
+    @Test
+    void 유저의_포인트_사용기능_테스트() throws Exception {
+        Long usePoint = 100L;
+
+        UserPoint user = new UserPoint(userId, existUserPoint, 0);
+
+        given(userPointRepository.selectById(anyLong()))
+                .willReturn(user);
+        given(userPointRepository.insertOrUpdate(anyLong(), anyLong()))
+                .willReturn(new UserPoint(userId, existUserPoint - usePoint, 0));
+
+        UserPointDTO userPoint = pointService.usePoint(userId, usePoint);
+
+        Assertions.assertNotNull(userPoint);
+        Assertions.assertEquals(userId, userPoint.getUser_id());
+        Assertions.assertEquals(userPoint.getUser_point(), existUserPoint - usePoint);
+    }
+
+    /**
+     * 사용할 포인트가 0 이하는 의미없다고 판단하여 테스트 작성
+     */
+    @Test
+    void 유저가_사용할_포인트가_0이하인_경우() {
+        Exception exception = Assertions.assertThrows(UsePointException.class,
+                () -> pointService.usePoint(userId, -50L));
+
+        //예외 메세지 검증
+        Assertions.assertEquals("Amount must be positive", exception.getMessage());
+    }
+
+    /**
+     * 포인트가 부족하면 사용을 못해야 하므로 테스트 작성
+     */
+    @Test
+    void 유저가_사용할_포인트만큼_잔액이_없을_경우() {
+        Long usePoint = 500L;
+
+        UserPoint user = new UserPoint(userId, existUserPoint, 0);
+
+        given(userPointRepository.selectById(anyLong()))
+                .willReturn(user);
+
+        Exception exception = Assertions.assertThrows(UsePointException.class,
+                () -> pointService.usePoint(userId, usePoint));
+
+        //예외 메세지 검증
+        Assertions.assertEquals("Insufficient Point", exception.getMessage());
     }
 }

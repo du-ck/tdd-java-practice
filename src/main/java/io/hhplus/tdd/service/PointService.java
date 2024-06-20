@@ -53,4 +53,8 @@ public class PointService {
         }
         return null;
     }
+
+    public UserPointDTO usePoint(long id, long amount) throws Exception {
+        return null;
+    }
 }
