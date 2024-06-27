@@ -154,7 +154,7 @@ public class PointIntegrationTest {
     }
 
     /**
-     * 포인트를 사용과 충전 같이 쓸때의 테스트를 위해 작성
+     * 포인트를 사용과 충전 같이 쓸때의 테스트를 위해 작성 ////
      * 추가로 히스토리 내역까지 같이 확인
      * @throws Exception
      */
